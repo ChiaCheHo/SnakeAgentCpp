@@ -70,19 +70,26 @@ RUN conda create -n rl python=3.8 -y
 RUN conda init
 RUN bash -c "source ~/.bashrc"
 
+SHELL ["conda", "run", "-n", "rl", "/bin/bash", "-c"]
+
 # 激活 Conda 環境並安裝 SnakeAgentCpp 的依賴
 RUN git clone https://github.com/ChiaCheHo/SnakeAgentCpp.git /home/SnakeAgentCpp
 # 用于激活环境，conda activate命令无效
-SHELL ["conda", "run", "-n", "rl", "/bin/bash", "-c"]
-RUN cd /home/SnakeAgentCpp
-# RUN conda activate rl
-RUN pip install -r /home/SnakeAgentCpp/requirements.txt
+# 切換到項目目錄
+WORKDIR /home/SnakeAgentCpp
+
+# 安裝項目依賴
+# RUN pip install -r /home/SnakeAgentCpp/requirements.txt
 
 # 清理安裝過程中下載的文件，減少映像大小
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # 設定默認工作目錄
 WORKDIR /home/SnakeAgentCpp
+
+# 安裝項目依賴
+RUN pip install --upgrade pip setuptools
+RUN pip install -r /home/SnakeAgentCpp/requirements.txt
 
 # # 設定容器啟動後進入 'rl' 環境
 # CMD ["/bin/bash", "-c", "source /opt/conda/bin/activate rl && exec bash"]
