@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     python3-dev \
+    wget \
     && apt-get clean
 
 # 安裝 xvfb 和 OpenGL 相關依賴
@@ -55,5 +56,46 @@ RUN git clone --recurse-submodules -b v1.59.0 https://github.com/grpc/grpc.git /
 # 安裝 Python gRPC 工具
 RUN pip3 install grpcio grpcio-tools
 
+# 安裝適用於 ARM 架構的 Miniconda
+RUN wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh -O ~/miniconda.sh && \
+    bash ~/miniconda.sh -b -p /opt/conda && \
+    rm ~/miniconda.sh
+
+# 更新 PATH 環境變數以使用 conda
+ENV PATH="/opt/conda/bin:$PATH"
+
+# 創建 Conda 環境 'rl'
+RUN conda create -n rl python=3.8 -y
+
+RUN conda init
+RUN bash -c "source ~/.bashrc"
+
+# 激活 Conda 環境並安裝 SnakeAgentCpp 的依賴
+RUN git clone https://github.com/ChiaCheHo/SnakeAgentCpp.git /home/SnakeAgentCpp
+# 用于激活环境，conda activate命令无效
+SHELL ["conda", "run", "-n", "rl", "/bin/bash", "-c"]
+RUN cd /home/SnakeAgentCpp
+# RUN conda activate rl
+RUN pip install -r /home/SnakeAgentCpp/requirements.txt
+
 # 清理安裝過程中下載的文件，減少映像大小
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# 設定默認工作目錄
+WORKDIR /home/SnakeAgentCpp
+
+# # 設定容器啟動後進入 'rl' 環境
+# CMD ["/bin/bash", "-c", "source /opt/conda/bin/activate rl && exec bash"]
+
+# # 激活 'rl' 環境並安裝 SnakeAgentCpp 的 requirements.txt
+# RUN git clone https://github.com/ChiaCheHo/SnakeAgentCpp.git /home/SnakeAgentCpp && \
+#     /opt/conda/bin/conda run -n rl pip install -r /home/SnakeAgentCpp/requirements.txt
+
+# # 清理安裝過程中下載的文件，減少映像大小
+# RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# # 設定默認工作目錄
+# WORKDIR /home/SnakeAgentCpp
+
+# # 設定容器啟動後進入 'rl' 環境
+# CMD ["/bin/bash", "-c", "source /opt/conda/bin/activate rl && exec bash"]
