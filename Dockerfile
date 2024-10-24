@@ -88,7 +88,7 @@ RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 WORKDIR /home/SnakeAgentCpp
 
 # 安裝項目依賴
-RUN pip install --upgrade pip setuptools
+RUN pip install --upgrade pip setuptools wheel
 RUN pip install -r /home/SnakeAgentCpp/requirements.txt
 
 # # 設定容器啟動後進入 'rl' 環境
