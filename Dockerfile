@@ -91,11 +91,15 @@ WORKDIR /home/SnakeAgentCpp
 RUN pip install --upgrade pip setuptools wheel
 RUN pip install -r /home/SnakeAgentCpp/requirements.txt
 
+RUN pip install Cython
+
 # 清理安裝過程中下載的文件，減少映像大小
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # 設定默認工作目錄
-WORKDIR /home/SnakeAgentCpp
+RUN rm -rf /home/SnakeAgentCpp
+
+WORKDIR /home/RL/SnakeAgentCpp
 
 # 設定容器啟動後進入 'rl' 環境
 # CMD ["bash", "-c", "source /opt/conda/etc/profile.d/conda.sh && conda activate rl && exec bash"]
