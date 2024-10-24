@@ -91,18 +91,11 @@ WORKDIR /home/SnakeAgentCpp
 RUN pip install --upgrade pip setuptools wheel
 RUN pip install -r /home/SnakeAgentCpp/requirements.txt
 
-# # 設定容器啟動後進入 'rl' 環境
-# CMD ["/bin/bash", "-c", "source /opt/conda/bin/activate rl && exec bash"]
+# 清理安裝過程中下載的文件，減少映像大小
+RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# # 激活 'rl' 環境並安裝 SnakeAgentCpp 的 requirements.txt
-# RUN git clone https://github.com/ChiaCheHo/SnakeAgentCpp.git /home/SnakeAgentCpp && \
-#     /opt/conda/bin/conda run -n rl pip install -r /home/SnakeAgentCpp/requirements.txt
+# 設定默認工作目錄
+WORKDIR /home/SnakeAgentCpp
 
-# # 清理安裝過程中下載的文件，減少映像大小
-# RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# # 設定默認工作目錄
-# WORKDIR /home/SnakeAgentCpp
-
-# # 設定容器啟動後進入 'rl' 環境
-# CMD ["/bin/bash", "-c", "source /opt/conda/bin/activate rl && exec bash"]
+# 設定容器啟動後進入 'rl' 環境
+# CMD ["bash", "-c", "source /opt/conda/etc/profile.d/conda.sh && conda activate rl && exec bash"]
