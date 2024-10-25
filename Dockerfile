@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean
 
 # 安裝 xvfb 和 OpenGL 相關依賴
-RUN apt-get update && apt-get install -y xvfb libgl1-mesa-glx libgl1-mesa-dri
+RUN apt-get update &&apt-get install -y xvfb libgl1-mesa-glx libgl1-mesa-dri
 
 # 設定時區，避免卡在 geographic area
 RUN ln -fs /usr/share/zoneinfo/Asia/Taipei /etc/localtime && \
@@ -67,39 +67,23 @@ ENV PATH="/opt/conda/bin:$PATH"
 # 創建 Conda 環境 'rl'
 RUN conda create -n rl python=3.8 -y
 
-RUN conda init
-RUN bash -c "source ~/.bashrc"
+# 將激活環境命令添加到 .bashrc
+RUN echo "source /opt/conda/etc/profile.d/conda.sh && conda activate rl" >> ~/.bashrc
 
-SHELL ["conda", "run", "-n", "rl", "/bin/bash", "-c"]
-
-# 激活 Conda 環境並安裝 SnakeAgentCpp 的依賴
+# 克隆 SnakeAgentCpp 專案並切換到該目錄
 RUN git clone https://github.com/ChiaCheHo/SnakeAgentCpp.git /home/SnakeAgentCpp
-# 用于激活环境，conda activate命令无效
-# 切換到項目目錄
 WORKDIR /home/SnakeAgentCpp
 
 # 安裝項目依賴
-# RUN pip install -r /home/SnakeAgentCpp/requirements.txt
+RUN conda run -n rl pip install --upgrade pip setuptools wheel && \
+    conda run -n rl pip install -r requirements.txt && \
+    conda run -n rl pip install Cython
 
 # 清理安裝過程中下載的文件，減少映像大小
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# 設定默認工作目錄
-WORKDIR /home/SnakeAgentCpp
-
-# 安裝項目依賴
-RUN pip install --upgrade pip setuptools wheel
-RUN pip install -r /home/SnakeAgentCpp/requirements.txt
-
-RUN pip install Cython
-
-# 清理安裝過程中下載的文件，減少映像大小
-RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# 設定默認工作目錄
-RUN rm -rf /home/SnakeAgentCpp
-
+# 切換到最終工作目錄
 WORKDIR /home/RL/SnakeAgentCpp
 
 # 設定容器啟動後進入 'rl' 環境
-# CMD ["bash", "-c", "source /opt/conda/etc/profile.d/conda.sh && conda activate rl && exec bash"]
+CMD ["bash", "-i"]

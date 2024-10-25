@@ -6,3 +6,4 @@ shimmy>=0.2.1
 gymnasium==0.28.1
 grpcio==1.59.0           # 添加 grpcio 模組
 grpcio-tools==1.59.0     # 添加 grpcio-tools 模組
+Cython
