@@ -1,3 +1,4 @@
+# control_snake.py
 import snake_game
 import sys
 
