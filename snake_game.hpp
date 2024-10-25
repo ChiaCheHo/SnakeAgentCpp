@@ -1,3 +1,6 @@
+#ifndef SNAKE_GAME_HPP
+#define SNAKE_GAME_HPP
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
@@ -7,8 +10,7 @@
 #include <ctime>
 #include <iostream>
 #include <algorithm> // For std::find
-
-#include <fstream>
+#include <fstream>   // For file checks
 
 class SnakeGame
 {
@@ -21,49 +23,118 @@ public:
     {
         seed_value = seed;
         srand(seed);
+
+        // 初始化 SDL，並處理錯誤
         if (!silent_mode)
         {
-            SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
-            TTF_Init(); // Initialize TTF for font rendering
-            window = SDL_CreateWindow("Snake Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, display_width, display_height, 0);
-            renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-            font = TTF_OpenFont("./raleway/Raleway-Light.ttf", 8); // You will need to provide a valid font file path
-
-            if (TTF_Init() == -1)
+            if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
             {
-                std::cerr << "TTF_Init failed: " << TTF_GetError() << std::endl;
+                std::cerr << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
                 exit(1);
             }
 
+            // 初始化字體支持，並檢查是否成功
+            if (TTF_Init() == -1)
+            {
+                std::cerr << "Failed to initialize SDL_ttf: " << TTF_GetError() << std::endl;
+                exit(1);
+            }
+
+            // 創建窗口
+            window = SDL_CreateWindow("Snake Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, display_width, display_height, 0);
+            if (!window)
+            {
+                std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
+                exit(1);
+            }
+
+            // 創建渲染器
+            renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+            if (!renderer)
+            {
+                std::cerr << "Failed to create renderer: " << SDL_GetError() << std::endl;
+                exit(1);
+            }
+
+            // 加載字體
             std::ifstream file("./raleway/Raleway-Light.ttf");
             if (!file.good())
             {
                 std::cerr << "Font file not found!" << std::endl;
                 exit(1);
             }
+            font = TTF_OpenFont("./raleway/Raleway-Light.ttf", 8);
+            if (!font)
+            {
+                std::cerr << "Failed to load font: " << TTF_GetError() << std::endl;
+                exit(1);
+            }
 
-            // Initialize SDL_mixer and load sound effects
-            Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
-            sound_eat = Mix_LoadWAV("sound/eat.wav");
-            sound_game_over = Mix_LoadWAV("sound/game_over.wav");
-            sound_victory = Mix_LoadWAV("sound/victory.wav");
+            // // 初始化音頻系統，並加載聲音效果
+            // if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) == -1)
+            // {
+            //     std::cerr << "Failed to initialize SDL_mixer: " << Mix_GetError() << std::endl;
+            //     exit(1);
+            // }
+
+            // sound_eat = Mix_LoadWAV("sound/eat.wav");
+            // sound_game_over = Mix_LoadWAV("sound/game_over.wav");
+            // sound_victory = Mix_LoadWAV("sound/victory.wav");
+            // if (!sound_eat || !sound_game_over || !sound_victory)
+            // {
+            //     std::cerr << "Failed to load sound effects: " << Mix_GetError() << std::endl;
+            //     exit(1);
+            // }
         }
+
         reset();
     }
 
     ~SnakeGame()
     {
+        // if (!silent_mode)
+        // {
+        //     // Mix_FreeChunk(sound_eat);
+        //     // Mix_FreeChunk(sound_game_over);
+        //     // Mix_FreeChunk(sound_victory);
+        //     TTF_CloseFont(font);
+        //     TTF_Quit();
+        //     SDL_DestroyRenderer(renderer);
+        //     SDL_DestroyWindow(window);
+        //     // Mix_CloseAudio();
+        //     SDL_Quit();
+        // }
         if (!silent_mode)
         {
-            Mix_FreeChunk(sound_eat);
-            Mix_FreeChunk(sound_game_over);
-            Mix_FreeChunk(sound_victory);
-            TTF_CloseFont(font);
+            if (font)
+            {
+                TTF_CloseFont(font);
+            }
             TTF_Quit();
-            SDL_DestroyRenderer(renderer);
-            SDL_DestroyWindow(window);
+
+            if (renderer)
+            {
+                SDL_DestroyRenderer(renderer);
+            }
+            if (window)
+            {
+                SDL_DestroyWindow(window);
+            }
+
             SDL_Quit();
         }
+    }
+
+    // 實現 python_step 函數
+    bool python_step(int action)
+    {
+        return step(action); // 調用現有的 step 函數
+    }
+
+    // 實現 python_game_start 函數
+    void python_game_start()
+    {
+        gameStart(); // 調用現有的 gameStart 函數
     }
 
     void reset()
@@ -108,8 +179,8 @@ public:
         {
             food_obtained = true;
             score += 10;
-            if (!silent_mode)
-                Mix_PlayChannel(-1, sound_eat, 0);
+            // if (!silent_mode)
+            //     Mix_PlayChannel(-1, sound_eat, 0);
         }
         else
         {
@@ -131,8 +202,8 @@ public:
         }
         else
         {
-            if (!silent_mode)
-                Mix_PlayChannel(-1, sound_game_over, 0);
+            // if (!silent_mode)
+            //     Mix_PlayChannel(-1, sound_game_over, 0);
             return true;
         }
 
@@ -308,7 +379,7 @@ public:
         return false;
     }
 
-    void gameStart()
+    bool gameStart()
     {
         bool running = true;
         SDL_Event event;
@@ -316,7 +387,6 @@ public:
 
         while (running)
         {
-            // game.reset(); // 初始化遊戲
             this->reset();
 
             bool game_over = false;
@@ -353,23 +423,27 @@ public:
                     }
                 }
 
-                // 如果 step() 返回 true，表示遊戲結束
-                // if (game.step(action))
                 if (this->step(action))
                 {
-                    game_over = true; // 遊戲結束
+                    game_over = true;
                 }
 
-                SDL_Delay(150); // 控制遊戲速度
+                SDL_Delay(150);
             }
 
-            // 遊戲結束後，顯示選單
-            // if (!game.display_game_over_menu()) // 顯示遊戲結束選單
+            // 顯示遊戲結束選單，如果選擇退出則停止運行
             if (!this->display_game_over_menu())
             {
-                running = false; // 如果選擇退出遊戲
+                running = false; // 正確設置退出標誌
             }
         }
+
+        // // 遊戲結束時清理 SDL 資源
+        // SDL_DestroyRenderer(renderer);
+        // SDL_DestroyWindow(window);
+        // TTF_Quit(); // 如果你使用 TTF 字體
+        // SDL_Quit(); // 確保 SDL 正確退出
+        return false;
     }
 
 private:
@@ -381,9 +455,9 @@ private:
     bool silent_mode;
     SDL_Window *window = nullptr;
     SDL_Renderer *renderer = nullptr;
-    Mix_Chunk *sound_eat = nullptr;
-    Mix_Chunk *sound_game_over = nullptr;
-    Mix_Chunk *sound_victory = nullptr;
+    // Mix_Chunk *sound_eat = nullptr;
+    // Mix_Chunk *sound_game_over = nullptr;
+    // Mix_Chunk *sound_victory = nullptr;
     TTF_Font *font = nullptr;
     int seed_value;
 
@@ -413,3 +487,5 @@ private:
         }
     }
 };
+
+#endif // SNAKE_GAME_HPP
